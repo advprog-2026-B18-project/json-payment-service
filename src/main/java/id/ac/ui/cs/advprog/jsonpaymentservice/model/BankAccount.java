@@ -26,9 +26,6 @@ public class BankAccount {
     @Column(name = "account_number", nullable = false)
     private String accountNumber;
 
-    @Column(name = "account_number_masked", nullable = false)
-    private String accountNumberMasked;
-
     @Column(name = "account_name", nullable = false)
     private String accountName;
 
@@ -43,9 +40,6 @@ public class BankAccount {
 
     @Column(name = "verified_at")
     private LocalDateTime verifiedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
