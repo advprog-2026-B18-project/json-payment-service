@@ -23,9 +23,6 @@ public class Wallet {
     @Column(name = "escrow_balance", nullable = false)
     private Long escrowBalance = 0L;
 
-    @Column(name = "currency", nullable = false)
-    private String currency = "IDR";
-
     @Column(name = "total_topup_lifetime", nullable = false)
     private Long totalTopupLifetime = 0L;
 
