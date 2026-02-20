@@ -4,6 +4,7 @@ plugins {
     checkstyle
     id("org.springframework.boot") version "3.2.2"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.sonarqube") version "7.1.0.6387"
 }
 
 group = "id.ac.ui.cs.advprog"
@@ -30,6 +31,13 @@ checkstyle {
     toolVersion = "10.12.4"
     configFile = file("$rootDir/config/checkstyle/checkstyle.xml")
     isIgnoreFailures = false
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "advprog-2026-B18-project_json-payment-service")
+        property("sonar.organization", "advprog-2026-b18-project")
+    }
 }
 
 val seleniumJavaVersion = "4.14.1"
