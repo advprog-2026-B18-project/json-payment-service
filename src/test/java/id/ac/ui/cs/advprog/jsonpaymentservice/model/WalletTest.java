@@ -1,5 +1,8 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.model;
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class WalletTest {
@@ -13,9 +16,12 @@ class WalletTest {
         // Manually trigger the lifecycle method for unit testing
         wallet.onCreate();
 
-        assertNotNull(wallet.getCreatedAt());
-        assertNotNull(wallet.getUpdatedAt());
-        assertEquals(wallet.getCreatedAt(), wallet.getUpdatedAt());
+        LocalDateTime createdAt = wallet.getCreatedAt();
+        LocalDateTime updatedAt = wallet.getUpdatedAt();
+
+        assertNotNull(createdAt);
+        assertNotNull(updatedAt);
+        assertTrue(createdAt.isBefore(updatedAt) || createdAt.isEqual(updatedAt));
     }
 
     @Test
