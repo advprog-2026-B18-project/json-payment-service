@@ -8,7 +8,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
 class WalletRepositoryTest {
@@ -17,7 +19,7 @@ class WalletRepositoryTest {
     private WalletRepository walletRepository;
 
     @Test
-    void testFindByUserId_Success() {
+    void testFindByUserIdSuccess() {
         String userId = UUID.randomUUID().toString();
         Wallet wallet = new Wallet();
         wallet.setWalletId(UUID.randomUUID().toString());
@@ -31,7 +33,7 @@ class WalletRepositoryTest {
     }
 
     @Test
-    void testFindByUserId_NotFound() {
+    void testFindByUserIdNotFound() {
         Optional<Wallet> foundWallet = walletRepository.findByUserId("non-existent-user");
 
         assertFalse(foundWallet.isPresent());
