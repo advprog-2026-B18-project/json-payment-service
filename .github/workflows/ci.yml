@@ -22,8 +22,25 @@ jobs:
       - name: Add gradlew permission
         run: chmod +x gradlew
 
+      - name: Run Checkstyle (Linter)
+        run: ./gradlew checkstyleMain
+
       - name: Run unit tests
         run: ./gradlew test
 
-      - name: Run Checkstyle (Linter)
-        run: ./gradlew checkstyleMain
+      - name: Add Coverage Report to PR
+        if: github.event_name == 'pull_request'
+        uses: Madrapps/jacoco-report@v1.6.1
+        with:
+          paths: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 100
+          min-coverage-changed-files: 100
+          title: 'Code Coverage Report'
+          update-comment: true
+
+      - name: Upload Jacoco HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-html-report
+          path: build/reports/jacoco/test/html/
