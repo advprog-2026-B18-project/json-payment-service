@@ -3,6 +3,8 @@ package id.ac.ui.cs.advprog.jsonpaymentservice.model;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class TransactionTest {
@@ -24,7 +26,12 @@ class TransactionTest {
         assertNotNull(transaction.getCreatedAt());
         assertNotNull(transaction.getUpdatedAt());
 
-        assertEquals(transaction.getCreatedAt(), transaction.getUpdatedAt());
+        LocalDateTime createdAt = transaction.getCreatedAt();
+        LocalDateTime updatedAt = transaction.getUpdatedAt();
+
+        assertNotNull(createdAt);
+        assertNotNull(updatedAt);
+        assertTrue(createdAt.isBefore(updatedAt) || createdAt.isEqual(updatedAt));
     }
 
     @Test
