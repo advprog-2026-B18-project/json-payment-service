@@ -1,6 +1,11 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.Data;
 
 import java.time.LocalDateTime;
