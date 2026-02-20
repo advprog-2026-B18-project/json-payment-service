@@ -95,6 +95,14 @@ tasks.jacocoTestReport {
         xml.required.set(true)
         html.required.set(true)
     }
+
+    // exclude main function & enums dari jacoco test report
+    classDirectories.setFrom(
+        classDirectories.files.map { fileTree(it).apply {
+            exclude("**/model/enums/**")
+            exclude("**/JsonPaymentServiceApplication.class")
+        }}
+    )
 }
 
 
