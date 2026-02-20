@@ -1,6 +1,7 @@
 plugins {
     java
     jacoco
+    checkstyle
     id("org.springframework.boot") version "3.2.2"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -23,6 +24,12 @@ configurations {
 
 repositories {
     mavenCentral()
+}
+
+checkstyle {
+    toolVersion = "10.12.4"
+    configFile = file("$rootDir/config/checkstyle/checkstyle.xml")
+    isIgnoreFailures = false
 }
 
 val seleniumJavaVersion = "4.14.1"
@@ -84,6 +91,15 @@ tasks.test {
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
 
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+
+
+tasks.withType<Checkstyle>().configureEach {
     reports {
         xml.required.set(true)
         html.required.set(true)
