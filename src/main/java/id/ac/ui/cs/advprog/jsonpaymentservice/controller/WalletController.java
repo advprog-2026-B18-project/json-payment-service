@@ -41,10 +41,4 @@ public class WalletController {
         Wallet newWallet = walletService.createWalletForUser(userId);
         return new ResponseEntity<>(newWallet, HttpStatus.CREATED);
     }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<Wallet> getWallet(@PathVariable String userId) {
-        Wallet wallet = walletService.getWalletByUserId(userId);
-        return ResponseEntity.ok(wallet);
-    }
 }
