@@ -1,4 +1,4 @@
-package id.ac.ui.exception;
+package id.ac.ui.cs.advprog.jsonpaymentservice.exception;
 
 public class ValidationErrorException extends RuntimeException {
     private final String errorField;
