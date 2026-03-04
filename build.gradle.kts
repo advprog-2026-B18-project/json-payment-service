@@ -49,19 +49,23 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("me.paulschwarz:spring-dotenv:4.0.0")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
     runtimeOnly("org.postgresql:postgresql")
-    testImplementation("com.h2database:h2") // database untuk testing
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
+    testImplementation("com.h2database:h2") // database untuk testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    implementation("me.paulschwarz:spring-dotenv:4.0.0")
     testImplementation("org.seleniumhq.selenium:selenium-java:${seleniumJavaVersion}")
     testImplementation("io.github.bonigarcia:selenium-jupiter:${seleniumJupiterVersion}")
     testImplementation("io.github.bonigarcia:webdrivermanager:${webdrivermanagerVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")
 }
 
