@@ -1,7 +1,9 @@
 name: Deploy Spring Boot Service
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - setup/ci-cd
 
 env:
   SERVICE_NAME: payment-service 
