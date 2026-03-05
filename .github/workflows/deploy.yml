@@ -56,5 +56,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             docker pull ghcr.io/advprog-2026-b18-project/json-payment-service:latest
-            docker-compose -f /home/ubuntu/docker-compose.yml up -d --no-deps --build ${{ env.SERVICE_NAME }}
+            docker compose -f /home/ubuntu/docker-compose.yml up -d --no-deps --build ${{ env.SERVICE_NAME }}
             docker image prune -f
