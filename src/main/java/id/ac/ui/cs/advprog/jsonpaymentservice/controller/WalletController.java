@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,19 +22,28 @@ public class WalletController {
         this.walletService = walletService;
     }
 
-    // TODO: implement validasi jwt dulu wak
-    // TODO: tambain param buat get jwt nya (?)
     @GetMapping("/me")
-    public ResponseEntity<WalletMinimalResponse> getCurrentUserWallet() {
-      
-      // TODO: validasi jwt nya, kalo ga valid return 401 unauthorized
-      // TODO: kalo valid, extract user id nya, taro di param getWalletByUserId
-      Wallet wallet = walletService.getWalletByUserId("userId"); 
+    public ResponseEntity<WalletMinimalResponse> getCurrentUserWallet(
+            @RequestAttribute("X-User-Id") String userId,
+            @RequestAttribute("X-Username") String username, 
+            @RequestAttribute("X-Role") String role
+        ) {
 
-      long withdrawable_balance = wallet.getBalance() - wallet.getEscrowBalance();
-      WalletMinimalResponse response = new WalletMinimalResponse(wallet.getWalletId(), wallet.getUserId(), withdrawable_balance); 
-      
-      return ResponseEntity.ok(response);
+        Wallet wallet;
+        try {
+            wallet = walletService.getWalletByUserId(userId);
+        } catch (RuntimeException ex) {
+            wallet = walletService.createWalletForUser(userId);
+        }
+
+        long withdrawable_balance = wallet.getBalance() - wallet.getEscrowBalance();
+        WalletMinimalResponse response = new WalletMinimalResponse(
+            wallet.getWalletId(), 
+            wallet.getUserId(),
+            withdrawable_balance
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{userId}")
