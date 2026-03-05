@@ -4,6 +4,7 @@ import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -33,8 +34,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ErrorMessageResponse> handleNotFound(ValidationErrorException ex) {
+    public ResponseEntity<ErrorMessageResponse> handleNotFound(NoSuchElementException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessageResponse(ex.getMessage()));
+    }
+
+
+    @ExceptionHandler(AuthorizationServiceException.class)
+    public ResponseEntity<ErrorMessageResponse> handleNotAuthorized(AuthorizationServiceException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorMessageResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(AmountMismatchException.class)
