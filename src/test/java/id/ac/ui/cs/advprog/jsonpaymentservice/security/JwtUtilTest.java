@@ -1,103 +1,75 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.security;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Encoders;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JwtUtilTest {
 
+    private static final String SECRET = Encoders.BASE64.encode(
+            "my-super-secret-key-for-tests-123456".getBytes(StandardCharsets.UTF_8)
+    );
+
     private JwtUtil jwtUtil;
-    private PrivateKey testPrivateKey;
 
     @BeforeEach
-    void setUp() throws Exception {
-        // Generate a temporary, on-the-fly RSA Key Pair for testing
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-        
-        testPrivateKey = keyPair.getPrivate();
-        PublicKey testPublicKey = keyPair.getPublic();
-
-        // Base64 encode the public key to mimic .env file
-        String base64PublicKey = Encoders.BASE64.encode(testPublicKey.getEncoded());
-
-        // Initialize the utility and inject the public key string using reflection
+    void setUp() {
         jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "publicKeyString", base64PublicKey);
+        ReflectionTestUtils.setField(jwtUtil, "jwtSecret", SECRET);
+        ReflectionTestUtils.setField(jwtUtil, "jwtExpirationMs", 12345L);
     }
 
-    private String generateTestToken(String userId, String username, String role, long expirationMillis) {
+    private String generateToken(String userId, String email, String role, long expirationMillis) {
         return Jwts.builder()
-                .claim("user_id", userId)
-                .claim("username", username)
+                .setSubject(userId)
+                .claim("email", email)
                 .claim("role", role)
-                .subject(username)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMillis))
-                .signWith(testPrivateKey) // Sign the token using the test PRIVATE key
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
+                .signWith(SignatureAlgorithm.HS256, SECRET)
                 .compact();
     }
 
     @Test
-    void shouldExtractAllClaimsCorrectly() {
-        String expectedUserId = UUID.randomUUID().toString();
-        String expectedUsername = "car_enthusiast_99";
-        String expectedRole = "CUSTOMER";
-        
-        // generate a token valid for 1 hour
-        String token = generateTestToken(expectedUserId, expectedUsername, expectedRole, 3600000);
+    void shouldExtractClaimsCorrectly() {
+        String token = generateToken("user-123", "user@example.com", "ADMIN", 3600000);
 
-        String actualUserId = jwtUtil.extractUserId(token);
-        String actualUsername = jwtUtil.extractUsername(token);
-        String actualRole = jwtUtil.extractRole(token);
-
-        assertEquals(expectedUserId, actualUserId);
-        assertEquals(expectedUsername, actualUsername);
-        assertEquals(expectedRole, actualRole);
+        assertEquals("user-123", jwtUtil.getAccountIdFromToken(token));
+        assertEquals("user@example.com", jwtUtil.getEmailFromToken(token));
+        assertEquals("ADMIN", jwtUtil.getRoleFromToken(token));
     }
 
     @Test
     void shouldReturnTrueForValidToken() {
-        String token = generateTestToken(UUID.randomUUID().toString(), "admin_user", "ADMIN", 3600000);
+        String token = generateToken("user-123", "user@example.com", "ADMIN", 3600000);
 
-        boolean isValid = jwtUtil.isTokenValid(token);
-
-        assertTrue(isValid);
+        assertTrue(jwtUtil.validateToken(token));
     }
 
     @Test
     void shouldReturnFalseForExpiredToken() {
-        // generate an expired token
-        String expiredToken = generateTestToken(UUID.randomUUID().toString(), "test_user", "USER", -1000);
+        String expiredToken = generateToken("user-123", "user@example.com", "ADMIN", -1000);
 
-        boolean isValid = jwtUtil.isTokenValid(expiredToken);
-
-        assertFalse(isValid);
+        assertFalse(jwtUtil.validateToken(expiredToken));
     }
 
     @Test
-    void shouldReturnFalseForTamperedToken() throws Exception {
-        String token = generateTestToken(UUID.randomUUID().toString(), "test_user", "USER", 3600000);
-        
-        // Tamper with the token (change the payload slightly without updating the signature)
-        // Standard JWTs have 3 parts separated by dots. We alter the payload (middle part)
-        String[] parts = token.split("\\.");
-        String tamperedToken = parts[0] + "." + parts[1] + "tampered." + parts[2];
+    void shouldReturnFalseForInvalidToken() {
+        assertFalse(jwtUtil.validateToken("invalid.token"));
+    }
 
-        boolean isValid = jwtUtil.isTokenValid(tamperedToken);
-
-        assertFalse(isValid);
+    @Test
+    void shouldExposeConfiguredExpiration() {
+        assertEquals(12345L, jwtUtil.getJwtExpirationMs());
     }
 }
