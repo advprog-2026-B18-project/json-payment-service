@@ -13,4 +13,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
 	Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
 	List<Transaction> findAllByStatus(TransactionEnums.Status status);
 	List<Transaction> findAllByUserId(String userId);
+	Optional<Transaction> findByReferenceIdAndType(String referenceId, TransactionEnums.Type type);
 }

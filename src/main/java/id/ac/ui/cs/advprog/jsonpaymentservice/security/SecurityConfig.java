@@ -24,9 +24,7 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                // Allow public endpoints here if you have any (e.g., swagger docs)
-                // .requestMatchers("/public/**").permitAll()
-                // Require authentication for all other requests
+                .requestMatchers("/api/internal/**", "/internal/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
