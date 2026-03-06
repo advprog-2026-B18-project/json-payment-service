@@ -25,24 +25,11 @@ public class WalletController {
     @GetMapping("/me")
     public ResponseEntity<WalletMinimalResponse> getCurrentUserWallet(
             @RequestAttribute("X-User-Id") String userId,
-            @RequestAttribute("X-Username") String username, 
+            @RequestAttribute("X-Email") String email,
             @RequestAttribute("X-Role") String role
         ) {
 
-        Wallet wallet;
-        try {
-            wallet = walletService.getWalletByUserId(userId);
-        } catch (RuntimeException ex) {
-            wallet = walletService.createWalletForUser(userId);
-        }
-
-        long withdrawable_balance = wallet.getBalance() - wallet.getEscrowBalance();
-        WalletMinimalResponse response = new WalletMinimalResponse(
-            wallet.getWalletId(), 
-            wallet.getUserId(),
-            withdrawable_balance
-        );
-
+        WalletMinimalResponse response = walletService.processGetCurrentUserWallet(userId);
         return ResponseEntity.ok(response);
     }
 
