@@ -38,7 +38,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessageResponse(ex.getMessage()));
     }
 
-
     @ExceptionHandler(AuthorizationServiceException.class)
     public ResponseEntity<ErrorMessageResponse> handleNotAuthorized(AuthorizationServiceException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorMessageResponse(ex.getMessage()));
@@ -51,7 +50,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TransactionHasBeenConfirmedException.class)
-    public ResponseEntity<TransactionHasBeenConfirmedResponse> handleConfirmedTransaction(TransactionHasBeenConfirmedException ex) {
+    public ResponseEntity<TransactionHasBeenConfirmedResponse> handleConfirmedTransaction(
+            TransactionHasBeenConfirmedException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new TransactionHasBeenConfirmedResponse(ex.getMessage(), ex.getStatus()));
     }

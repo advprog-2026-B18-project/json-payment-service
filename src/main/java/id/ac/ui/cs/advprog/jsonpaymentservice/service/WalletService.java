@@ -39,11 +39,11 @@ public class WalletService {
             wallet = this.createWalletForUser(userId);
         }
 
-        long withdrawable_balance = wallet.getBalance() - wallet.getEscrowBalance();
+        long withdrawableBalance = wallet.getBalance() - wallet.getEscrowBalance();
         WalletMinimalResponse response = new WalletMinimalResponse(
                 wallet.getWalletId(),
                 wallet.getUserId(),
-                withdrawable_balance
+                withdrawableBalance
             );
 
         return response;

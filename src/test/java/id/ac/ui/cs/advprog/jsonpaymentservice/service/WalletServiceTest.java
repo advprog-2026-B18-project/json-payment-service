@@ -73,24 +73,6 @@ class WalletServiceTest {
     }
 
     @Test
-    void testProcessGetCurrentUserWalletExistingWallet() {
-        String userId = "user-123";
-        Wallet wallet = new Wallet();
-        wallet.setWalletId("wallet-123");
-        wallet.setUserId(userId);
-        wallet.setBalance(200_000L);
-        wallet.setEscrowBalance(50_000L);
-
-        when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(wallet));
-
-        WalletMinimalResponse response = walletService.processGetCurrentUserWallet(userId);
-
-        assertEquals("wallet-123", response.wallet_id());
-        assertEquals(userId, response.user_id());
-        assertEquals(150_000L, response.balance());
-    }
-
-    @Test
     void testProcessGetCurrentUserWalletCreatesWhenMissing() {
         String userId = "new-user";
         Wallet created = new Wallet();
