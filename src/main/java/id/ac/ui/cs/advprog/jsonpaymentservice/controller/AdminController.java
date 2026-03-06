@@ -20,7 +20,7 @@ import id.ac.ui.cs.advprog.jsonpaymentservice.service.TransactionService;
 import id.ac.ui.cs.advprog.jsonpaymentservice.service.WalletService;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/admin")
 public class AdminController {
     private final WalletService walletService;
     private final TransactionService transactionService;
