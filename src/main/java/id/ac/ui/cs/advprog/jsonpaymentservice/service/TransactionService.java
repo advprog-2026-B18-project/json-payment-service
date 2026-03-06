@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.jsonpaymentservice.service;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.ConfirmTopUpResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.PendingTransactionResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.TransactionResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.UserTopUpTransactionResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.request.TopUpRequest;
 import id.ac.ui.cs.advprog.jsonpaymentservice.model.Transaction;
 import id.ac.ui.cs.advprog.jsonpaymentservice.model.Wallet;
@@ -73,10 +74,23 @@ public class TransactionService {
             .stream()
             .map(transaction -> new PendingTransactionResponse(
                 transaction.getTransactionId(),
-                transaction.getAmount()
+                    transaction.getAmount(),
+                    transaction.getCreatedAt()
             ))
             .toList();
         }
+
+            public List<UserTopUpTransactionResponse> getCurrentUserTopUpTransactions(String userId) {
+            return transactionRepository.findAllByUserId(userId)
+                .stream()
+                .map(transaction -> new UserTopUpTransactionResponse(
+                    transaction.getTransactionId(),
+                    transaction.getAmount(),
+                    transaction.getStatus().name(),
+                    transaction.getCreatedAt()
+                ))
+                .toList();
+            }
 
         public ConfirmTopUpResponse confirmTopUp(String transactionId, String adminUserId) {
         Transaction transaction = transactionRepository.findById(transactionId)
