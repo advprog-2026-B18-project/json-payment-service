@@ -1,0 +1,246 @@
+package id.ac.ui.cs.advprog.jsonpaymentservice.service;
+
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.ConfirmTopUpResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.DeductPaymentResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.PendingTransactionResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.TransactionResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.UserTopUpTransactionResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.request.InternalDeductRequest;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.request.TopUpRequest;
+import id.ac.ui.cs.advprog.jsonpaymentservice.model.Transaction;
+import id.ac.ui.cs.advprog.jsonpaymentservice.model.Wallet;
+import id.ac.ui.cs.advprog.jsonpaymentservice.model.enums.TransactionEnums;
+import id.ac.ui.cs.advprog.jsonpaymentservice.repository.TransactionRepository;
+import id.ac.ui.cs.advprog.jsonpaymentservice.repository.WalletRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class TransactionService {
+    private static final long MINIMUM_TOP_UP = 10_000L;
+
+    private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
+
+    public TransactionService(TransactionRepository transactionRepository, WalletRepository walletRepository) {
+        this.transactionRepository = transactionRepository;
+        this.walletRepository = walletRepository;
+    }
+
+    public TransactionResponse processRequestTopUp(TopUpRequest topUpRequest, String userId) {
+        Long amount = topUpRequest.getAmount();
+        if (amount == null || amount < MINIMUM_TOP_UP) {
+            throw new MinimumTopUpException();
+        }
+
+        String idempotencyKey = topUpRequest.getIdempotencyKey();
+        if (idempotencyKey != null) {
+            Transaction existing = transactionRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+            if (existing != null) {
+                throw new DuplicateRequestException(existing.getTransactionId());
+            }
+        }
+
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Wallet not found for user: " + userId));
+
+        Transaction transaction = new Transaction();
+        transaction.setTransactionId(UUID.randomUUID().toString());
+        transaction.setWalletId(wallet.getWalletId());
+        transaction.setUserId(userId);
+        transaction.setType(TransactionEnums.Type.TOPUP);
+        transaction.setDirection(TransactionEnums.Direction.CREDIT);
+        transaction.setAmount(amount);
+        transaction.setStatus(TransactionEnums.Status.PENDING);
+        transaction.setDescription("Top up request");
+        transaction.setBalanceBefore(wallet.getBalance() == null ? 0L : wallet.getBalance());
+        transaction.setPaymentMethod(topUpRequest.getPaymentMethod());
+        transaction.setPaymentReference(topUpRequest.getBankCode());
+        transaction.setIdempotencyKey(idempotencyKey);
+
+        Transaction saved = transactionRepository.save(transaction);
+
+        return new TransactionResponse(
+                saved.getTransactionId(),
+                saved.getType().name(),
+                saved.getAmount(),
+                saved.getStatus().name(),
+                saved.getCreatedAt()
+        );
+    }
+
+        public List<PendingTransactionResponse> getPendingTransactions() {
+        return transactionRepository.findAllByStatus(TransactionEnums.Status.PENDING)
+            .stream()
+            .map(transaction -> new PendingTransactionResponse(
+                transaction.getTransactionId(),
+                    transaction.getAmount(),
+                    transaction.getCreatedAt()
+            ))
+            .toList();
+        }
+
+            public List<UserTopUpTransactionResponse> getCurrentUserTopUpTransactions(String userId) {
+            return transactionRepository.findAllByUserId(userId)
+                .stream()
+                .map(transaction -> new UserTopUpTransactionResponse(
+                    transaction.getTransactionId(),
+                    transaction.getAmount(),
+                    transaction.getStatus().name(),
+                    transaction.getCreatedAt()
+                ))
+                .toList();
+            }
+
+    public DeductPaymentResponse processInternalDeduct(InternalDeductRequest request) {
+        String userId = request.getUserId();
+
+        Transaction existingPayment = transactionRepository
+                .findByReferenceIdAndType(request.getOrderId(), TransactionEnums.Type.PAYMENT)
+                .orElse(null);
+        if (existingPayment != null) {
+            throw new PaymentAlreadyProcessedException(existingPayment.getTransactionId());
+        }
+
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        Long currentBalance = wallet.getBalance() == null ? 0L : wallet.getBalance();
+        Long currentEscrow = wallet.getEscrowBalance() == null ? 0L : wallet.getEscrowBalance();
+        Long withdrawableBalance = currentBalance - currentEscrow;
+
+        if (withdrawableBalance < request.getAmount()) {
+            throw new InsufficientBalanceException(withdrawableBalance, request.getAmount());
+        }
+
+        Long newBalance = currentBalance - request.getAmount();
+        Long newEscrowBalance = currentEscrow + request.getAmount();
+
+        wallet.setBalance(newBalance);
+        wallet.setEscrowBalance(newEscrowBalance);
+        walletRepository.save(wallet);
+
+        Transaction transaction = new Transaction();
+        transaction.setTransactionId(UUID.randomUUID().toString());
+        transaction.setWalletId(wallet.getWalletId());
+        transaction.setUserId(userId);
+        transaction.setType(TransactionEnums.Type.PAYMENT);
+        transaction.setDirection(TransactionEnums.Direction.DEBIT);
+        transaction.setAmount(request.getAmount());
+        transaction.setStatus(TransactionEnums.Status.SUCCESS);
+        transaction.setDescription(request.getDescription());
+        transaction.setBalanceBefore(currentBalance);
+        transaction.setBalanceAfter(newBalance);
+        transaction.setReferenceId(request.getOrderId());
+        transaction.setReferenceType(TransactionEnums.ReferenceType.ORDER);
+
+        Transaction saved = transactionRepository.save(transaction);
+
+        return new DeductPaymentResponse(
+                saved.getTransactionId(),
+                saved.getType().name(),
+                saved.getUserId(),
+                saved.getAmount(),
+                newBalance,
+                newEscrowBalance,
+                saved.getStatus().name()
+        );
+    }
+
+        public ConfirmTopUpResponse confirmTopUp(String transactionId, String adminUserId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+            .orElseThrow(() -> new RuntimeException("Transaction not found: " + transactionId));
+
+        if (transaction.getStatus() != TransactionEnums.Status.PENDING) {
+            throw new TransactionHasBeenConfirmedException();
+        }
+
+        Wallet wallet = walletRepository.findById(transaction.getWalletId())
+            .orElseThrow(() -> new RuntimeException("Wallet not found: " + transaction.getWalletId()));
+
+        Long currentBalance = wallet.getBalance() == null ? 0L : wallet.getBalance();
+        Long newBalance = currentBalance + transaction.getAmount();
+
+        wallet.setBalance(newBalance);
+        walletRepository.save(wallet);
+
+        transaction.setStatus(TransactionEnums.Status.SUCCESS);
+        transaction.setBalanceAfter(newBalance);
+        transaction.setConfirmedBy(adminUserId);
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        return new ConfirmTopUpResponse(
+            savedTransaction.getTransactionId(),
+            savedTransaction.getStatus().name(),
+            savedTransaction.getAmount(),
+            newBalance,
+            savedTransaction.getUpdatedAt()
+        );
+        }
+
+    public static class MinimumTopUpException extends RuntimeException {
+        public MinimumTopUpException() {
+            super("Minimum top-up is Rp 10.000");
+        }
+    }
+
+    public static class DuplicateRequestException extends RuntimeException {
+        private final String existingTransactionId;
+
+        public DuplicateRequestException(String existingTransactionId) {
+            super("Duplicate request");
+            this.existingTransactionId = existingTransactionId;
+        }
+
+        public String getExistingTransactionId() {
+            return existingTransactionId;
+        }
+    }
+
+    public static class TransactionHasBeenConfirmedException extends RuntimeException {
+        public TransactionHasBeenConfirmedException() {
+            super("Transaction has been confirmed");
+        }
+    }
+
+    public static class PaymentAlreadyProcessedException extends RuntimeException {
+        private final String transactionId;
+
+        public PaymentAlreadyProcessedException(String transactionId) {
+            super("Payment already processed");
+            this.transactionId = transactionId;
+        }
+
+        public String getTransactionId() {
+            return transactionId;
+        }
+    }
+
+    public static class InsufficientBalanceException extends RuntimeException {
+        private final Long balance;
+        private final Long required;
+
+        public InsufficientBalanceException(Long balance, Long required) {
+            super("Insufficient balance");
+            this.balance = balance;
+            this.required = required;
+        }
+
+        public Long getBalance() {
+            return balance;
+        }
+
+        public Long getRequired() {
+            return required;
+        }
+    }
+
+    public static class UserNotFoundException extends RuntimeException {
+        public UserNotFoundException() {
+            super("User not found");
+        }
+    }
+}

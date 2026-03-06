@@ -38,17 +38,16 @@ class TransactionTest {
     }
 
     @Test
-    void testPreUpdateChangesUpdatedAt() throws InterruptedException {
+    void testPreUpdateChangesUpdatedAt() {
         transaction.onCreate();
         var initialCreatedAt = transaction.getCreatedAt();
-        var initialUpdatedAt = transaction.getUpdatedAt();
-
-        Thread.sleep(10);
+        var previousUpdatedAt = transaction.getUpdatedAt().minusSeconds(1);
+        transaction.setUpdatedAt(previousUpdatedAt);
 
         transaction.onUpdate();
 
         assertEquals(initialCreatedAt, transaction.getCreatedAt());
         assertNotNull(transaction.getUpdatedAt());
-        assertTrue(transaction.getUpdatedAt().isAfter(initialUpdatedAt));
+        assertTrue(transaction.getUpdatedAt().isAfter(previousUpdatedAt));
     }
 }
