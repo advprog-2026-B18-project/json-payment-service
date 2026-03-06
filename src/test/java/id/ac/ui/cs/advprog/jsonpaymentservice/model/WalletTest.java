@@ -27,18 +27,16 @@ class WalletTest {
     }
 
     @Test
-    void testPreUpdateChangesUpdatedAt() throws InterruptedException {
+    void testPreUpdateChangesUpdatedAt() {
         Wallet wallet = new Wallet();
         wallet.onCreate();
 
-        var initialUpdatedAt = wallet.getUpdatedAt();
-
-        // Slight delay to ensure the timestamp changes
-        Thread.sleep(10);
+        var previousUpdatedAt = wallet.getUpdatedAt().minusSeconds(1);
+        wallet.setUpdatedAt(previousUpdatedAt);
 
         wallet.onUpdate();
 
         assertNotNull(wallet.getUpdatedAt());
-        assertTrue(wallet.getUpdatedAt().isAfter(initialUpdatedAt));
+        assertTrue(wallet.getUpdatedAt().isAfter(previousUpdatedAt));
     }
 }
