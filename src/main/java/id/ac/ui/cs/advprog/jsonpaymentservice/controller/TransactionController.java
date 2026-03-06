@@ -14,7 +14,7 @@ import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.request.TopUpReque
 import id.ac.ui.cs.advprog.jsonpaymentservice.service.TransactionService;
 
 @RestController
-@RequestMapping("/transaction")
+@RequestMapping("/api/transaction")
 public class TransactionController {
 
     private final TransactionService transactionService;

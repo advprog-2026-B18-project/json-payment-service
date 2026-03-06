@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.service;
 
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.ConfirmTopUpResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.TransactionResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.request.TopUpRequest;
 import id.ac.ui.cs.advprog.jsonpaymentservice.model.Transaction;
@@ -65,6 +66,38 @@ public class TransactionService {
         );
     }
 
+        public ConfirmTopUpResponse confirmTopUp(String transactionId, String adminUserId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+            .orElseThrow(() -> new RuntimeException("Transaction not found: " + transactionId));
+
+        if (transaction.getStatus() != TransactionEnums.Status.PENDING) {
+            throw new TransactionHasBeenConfirmedException();
+        }
+
+        Wallet wallet = walletRepository.findById(transaction.getWalletId())
+            .orElseThrow(() -> new RuntimeException("Wallet not found: " + transaction.getWalletId()));
+
+        Long currentBalance = wallet.getBalance() == null ? 0L : wallet.getBalance();
+        Long newBalance = currentBalance + transaction.getAmount();
+
+        wallet.setBalance(newBalance);
+        walletRepository.save(wallet);
+
+        transaction.setStatus(TransactionEnums.Status.SUCCESS);
+        transaction.setBalanceAfter(newBalance);
+        transaction.setConfirmedBy(adminUserId);
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        return new ConfirmTopUpResponse(
+            savedTransaction.getTransactionId(),
+            savedTransaction.getStatus().name(),
+            savedTransaction.getAmount(),
+            newBalance,
+            savedTransaction.getUpdatedAt()
+        );
+        }
+
     public static class MinimumTopUpException extends RuntimeException {
         public MinimumTopUpException() {
             super("Minimum top-up is Rp 10.000");
@@ -81,6 +114,12 @@ public class TransactionService {
 
         public String getExistingTransactionId() {
             return existingTransactionId;
+        }
+    }
+
+    public static class TransactionHasBeenConfirmedException extends RuntimeException {
+        public TransactionHasBeenConfirmedException() {
+            super("Transaction has been confirmed");
         }
     }
 }

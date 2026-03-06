@@ -35,8 +35,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             token = header.substring(7);
         }
 
-        System.out.println("test");
-
         if (token != null && jwtUtil.validateToken(token)
                 && SecurityContextHolder.getContext().getAuthentication() == null) {
             // TODO: handle case account banned 
@@ -50,8 +48,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String userId = jwtUtil.getAccountIdFromToken(token);
             String email = jwtUtil.getEmailFromToken(token);
             String role = jwtUtil.getRoleFromToken(token);
-
-            System.out.println(userId + email + role);
 
             // Set the user_id as a request attribute so the Controller can grab it easily
             request.setAttribute("X-User-Id", userId);
