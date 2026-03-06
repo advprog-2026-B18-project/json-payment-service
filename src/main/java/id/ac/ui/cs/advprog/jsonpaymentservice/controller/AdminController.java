@@ -1,9 +1,11 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.controller;
 
 import java.util.NoSuchElementException;
+import java.util.List;
 
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.ConfirmTopUpResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.ErrorMessageResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.PendingTransactionResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,8 +29,6 @@ public class AdminController {
         this.walletService = walletService;
         this.transactionService = transactionService;
     }
-    // TODO: validasi role = admin (admin doang yg boleh akses semua endpoint
-    // disini)
 
     @GetMapping("/wallets/{userQueryId}")
     public ResponseEntity<Wallet> getWallet(
@@ -64,6 +64,18 @@ public class AdminController {
         }
 
         ConfirmTopUpResponse response = transactionService.confirmTopUp(transactionId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/topup-request")
+    public ResponseEntity<?> getPendingTopUpRequests(
+            @RequestAttribute("X-Role") String role
+    ) {
+        if (!isAdminRole(role)) {
+            return ResponseEntity.status(403).body(new ErrorMessageResponse("Not Authorized"));
+        }
+
+        List<PendingTransactionResponse> response = transactionService.getPendingTransactions();
         return ResponseEntity.ok(response);
     }
 

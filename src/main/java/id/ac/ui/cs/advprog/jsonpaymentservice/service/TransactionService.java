@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.service;
 
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.ConfirmTopUpResponse;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.PendingTransactionResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.TransactionResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.dto.transaction.request.TopUpRequest;
 import id.ac.ui.cs.advprog.jsonpaymentservice.model.Transaction;
@@ -10,6 +11,7 @@ import id.ac.ui.cs.advprog.jsonpaymentservice.repository.TransactionRepository;
 import id.ac.ui.cs.advprog.jsonpaymentservice.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -65,6 +67,16 @@ public class TransactionService {
                 saved.getCreatedAt()
         );
     }
+
+        public List<PendingTransactionResponse> getPendingTransactions() {
+        return transactionRepository.findAllByStatus(TransactionEnums.Status.PENDING)
+            .stream()
+            .map(transaction -> new PendingTransactionResponse(
+                transaction.getTransactionId(),
+                transaction.getAmount()
+            ))
+            .toList();
+        }
 
         public ConfirmTopUpResponse confirmTopUp(String transactionId, String adminUserId) {
         Transaction transaction = transactionRepository.findById(transactionId)
