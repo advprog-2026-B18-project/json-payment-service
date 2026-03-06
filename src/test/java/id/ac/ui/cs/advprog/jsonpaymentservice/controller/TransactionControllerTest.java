@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TransactionController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import({ SecurityConfig.class, JwtAuthenticationFilter.class })
 class TransactionControllerTest {
 
     @Autowired
@@ -73,27 +73,27 @@ class TransactionControllerTest {
                 "TOPUP",
                 15000L,
                 "PENDING",
-                LocalDateTime.now()
-        );
+                LocalDateTime.now());
 
         when(jwtUtil.validateToken(token)).thenReturn(true);
         when(jwtUtil.getAccountIdFromToken(token)).thenReturn(TEST_USER_ID);
         when(jwtUtil.getEmailFromToken(token)).thenReturn(TEST_USERNAME);
         when(jwtUtil.getRoleFromToken(token)).thenReturn(TEST_ROLE);
-        when(transactionService.processRequestTopUp(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(TEST_USER_ID)))
+        when(transactionService.processRequestTopUp(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(TEST_USER_ID)))
                 .thenReturn(response);
 
         mockMvc.perform(post("/transaction/topup")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "amount": 15000,
-                                  "payment_method": "VA",
-                                  "bank_code": "BCA",
-                                  "idempotency_key": "idem-123"
-                                }
-                                """))
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "amount": 15000,
+                          "payment_method": "VA",
+                          "bank_code": "BCA",
+                          "idempotency_key": "idem-123"
+                        }
+                        """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.transaction_id").value("tx-123"))
                 .andExpect(jsonPath("$.type").value("TOPUP"))
@@ -110,20 +110,21 @@ class TransactionControllerTest {
         when(jwtUtil.getAccountIdFromToken(token)).thenReturn(TEST_USER_ID);
         when(jwtUtil.getEmailFromToken(token)).thenReturn(TEST_USERNAME);
         when(jwtUtil.getRoleFromToken(token)).thenReturn(TEST_ROLE);
-        when(transactionService.processRequestTopUp(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(TEST_USER_ID)))
+        when(transactionService.processRequestTopUp(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(TEST_USER_ID)))
                 .thenThrow(new TransactionService.MinimumTopUpException());
 
         mockMvc.perform(post("/transaction/topup")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "amount": 9000,
-                                  "payment_method": "VA",
-                                  "bank_code": "BCA",
-                                  "idempotency_key": "idem-123"
-                                }
-                                """))
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "amount": 9000,
+                          "payment_method": "VA",
+                          "bank_code": "BCA",
+                          "idempotency_key": "idem-123"
+                        }
+                        """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error_field").value("amount"))
                 .andExpect(jsonPath("$.message").value("Minimum top-up is Rp 10.000"));
@@ -137,20 +138,21 @@ class TransactionControllerTest {
         when(jwtUtil.getAccountIdFromToken(token)).thenReturn(TEST_USER_ID);
         when(jwtUtil.getEmailFromToken(token)).thenReturn(TEST_USERNAME);
         when(jwtUtil.getRoleFromToken(token)).thenReturn(TEST_ROLE);
-        when(transactionService.processRequestTopUp(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(TEST_USER_ID)))
+        when(transactionService.processRequestTopUp(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(TEST_USER_ID)))
                 .thenThrow(new TransactionService.DuplicateRequestException("existing-tx-id"));
 
         mockMvc.perform(post("/transaction/topup")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "amount": 15000,
-                                  "payment_method": "VA",
-                                  "bank_code": "BCA",
-                                  "idempotency_key": "idem-duplicate"
-                                }
-                                """))
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "amount": 15000,
+                          "payment_method": "VA",
+                          "bank_code": "BCA",
+                          "idempotency_key": "idem-duplicate"
+                        }
+                        """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Duplicate request"))
                 .andExpect(jsonPath("$.existing_transaction_id").value("existing-tx-id"));

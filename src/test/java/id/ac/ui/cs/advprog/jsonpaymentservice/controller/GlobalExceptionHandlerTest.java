@@ -24,8 +24,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleDuplicateReturns409() {
-        ResponseEntity<DuplicateRequestResponse> response =
-                handler.handleDuplicate(new DuplicateRequestException("Duplicate request", "tx-1"));
+        ResponseEntity<DuplicateRequestResponse> response = handler
+                .handleDuplicate(new DuplicateRequestException("Duplicate request", "tx-1"));
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertEquals("Duplicate request", response.getBody().message());
@@ -34,8 +34,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleValidationReturns400() {
-        ResponseEntity<ValidationErrorResponse> response =
-                handler.handleValidation(new ValidationErrorException("amount", "Minimum top-up is Rp 10.000"));
+        ResponseEntity<ValidationErrorResponse> response = handler
+                .handleValidation(new ValidationErrorException("amount", "Minimum top-up is Rp 10.000"));
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("amount", response.getBody().error_field());
@@ -44,8 +44,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleNotFoundReturns404() {
-        ResponseEntity<ErrorMessageResponse> response =
-                handler.handleNotFound(new NoSuchElementException("User not found"));
+        ResponseEntity<ErrorMessageResponse> response = handler
+                .handleNotFound(new NoSuchElementException("User not found"));
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals("User not found", response.getBody().message());
@@ -53,8 +53,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleNotAuthorizedReturns401() {
-        ResponseEntity<ErrorMessageResponse> response =
-                handler.handleNotAuthorized(new AuthorizationServiceException("Not Authorized"));
+        ResponseEntity<ErrorMessageResponse> response = handler
+                .handleNotAuthorized(new AuthorizationServiceException("Not Authorized"));
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Not Authorized", response.getBody().message());
@@ -62,8 +62,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleAmountMismatchReturns400() {
-        ResponseEntity<AmountMismatchResponse> response =
-                handler.handleAmountMismatch(new AmountMismatchException("Amount mismatch", 10000L, 5000L));
+        ResponseEntity<AmountMismatchResponse> response = handler
+                .handleAmountMismatch(new AmountMismatchException("Amount mismatch", 10000L, 5000L));
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Amount mismatch", response.getBody().message());
@@ -73,8 +73,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleConfirmedTransactionReturns400() {
-        ResponseEntity<TransactionHasBeenConfirmedResponse> response =
-                handler.handleConfirmedTransaction(new TransactionHasBeenConfirmedException("Transaction has been confirmed", "SUCCESS"));
+        ResponseEntity<TransactionHasBeenConfirmedResponse> response = handler.handleConfirmedTransaction(
+                new TransactionHasBeenConfirmedException("Transaction has been confirmed", "SUCCESS"));
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Transaction has been confirmed", response.getBody().message());

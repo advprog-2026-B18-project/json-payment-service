@@ -1,14 +1,16 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.security;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import javax.crypto.SecretKey;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,12 +23,14 @@ class JwtUtilTest {
     );
 
     private JwtUtil jwtUtil;
+    private SecretKey secretKey;
 
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtil();
         ReflectionTestUtils.setField(jwtUtil, "jwtSecret", SECRET);
         ReflectionTestUtils.setField(jwtUtil, "jwtExpirationMs", 12345L);
+        secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET));
     }
 
     private String generateToken(String userId, String email, String role, long expirationMillis) {
@@ -36,7 +40,7 @@ class JwtUtilTest {
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
-                .signWith(SignatureAlgorithm.HS256, SECRET)
+                .signWith(secretKey)
                 .compact();
     }
 

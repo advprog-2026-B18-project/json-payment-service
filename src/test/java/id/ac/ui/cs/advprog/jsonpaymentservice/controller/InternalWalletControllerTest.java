@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = InternalWalletController.class, properties = "app.internal.service-key=change-me")
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import({ SecurityConfig.class, JwtAuthenticationFilter.class })
 class InternalWalletControllerTest {
 
     @Autowired
@@ -41,22 +41,21 @@ class InternalWalletControllerTest {
                 150000L,
                 50000L,
                 170000L,
-                "SUCCESS"
-        );
+                "SUCCESS");
 
         when(transactionService.processInternalDeduct(any())).thenReturn(response);
 
         mockMvc.perform(post("/internal/wallets/deduct")
-                        .header("X-Service-Key", "change-me")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "user_id": "user-1",
-                                  "order_id": "order-1",
-                                  "amount": 150000,
-                                  "description": "Order payment"
-                                }
-                                """))
+                .header("X-Service-Key", "change-me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "user_id": "user-1",
+                          "order_id": "order-1",
+                          "amount": 150000,
+                          "description": "Order payment"
+                        }
+                        """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.transaction_id").value("tx-1"))
                 .andExpect(jsonPath("$.type").value("PAYMENT"))
@@ -73,16 +72,16 @@ class InternalWalletControllerTest {
                 .thenThrow(new TransactionService.PaymentAlreadyProcessedException("tx-existing"));
 
         mockMvc.perform(post("/internal/wallets/deduct")
-                        .header("X-Service-Key", "change-me")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "user_id": "user-1",
-                                  "order_id": "order-1",
-                                  "amount": 150000,
-                                  "description": "Order payment"
-                                }
-                                """))
+                .header("X-Service-Key", "change-me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "user_id": "user-1",
+                          "order_id": "order-1",
+                          "amount": 150000,
+                          "description": "Order payment"
+                        }
+                        """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Payment already processed"))
                 .andExpect(jsonPath("$.transaction_id").value("tx-existing"));
@@ -94,16 +93,16 @@ class InternalWalletControllerTest {
                 .thenThrow(new TransactionService.InsufficientBalanceException(80000L, 150000L));
 
         mockMvc.perform(post("/internal/wallets/deduct")
-                        .header("X-Service-Key", "change-me")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "user_id": "user-1",
-                                  "order_id": "order-1",
-                                  "amount": 150000,
-                                  "description": "Order payment"
-                                }
-                                """))
+                .header("X-Service-Key", "change-me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "user_id": "user-1",
+                          "order_id": "order-1",
+                          "amount": 150000,
+                          "description": "Order payment"
+                        }
+                        """))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Insufficient balance"))
                 .andExpect(jsonPath("$.balance").value(80000))
@@ -116,34 +115,34 @@ class InternalWalletControllerTest {
                 .thenThrow(new TransactionService.UserNotFoundException());
 
         mockMvc.perform(post("/internal/wallets/deduct")
-                        .header("X-Service-Key", "change-me")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "user_id": "unknown-user",
-                                  "order_id": "order-1",
-                                  "amount": 150000,
-                                  "description": "Order payment"
-                                }
-                                """))
+                .header("X-Service-Key", "change-me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "user_id": "unknown-user",
+                          "order_id": "order-1",
+                          "amount": 150000,
+                          "description": "Order payment"
+                        }
+                        """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
 
-                @Test
-                void deductWalletBalanceWrongServiceKeyReturns401() throws Exception {
-                                mockMvc.perform(post("/internal/wallets/deduct")
-                                                                                                .header("X-Service-Key", "wrong-key")
-                                                                                                .contentType(MediaType.APPLICATION_JSON)
-                                                                                                .content("""
-                                                                                                                                {
-                                                                                                                                        "user_id": "user-1",
-                                                                                                                                        "order_id": "order-1",
-                                                                                                                                        "amount": 150000,
-                                                                                                                                        "description": "Order payment"
-                                                                                                                                }
-                                                                                                                                """))
-                                                                .andExpect(status().isUnauthorized())
-                                                                .andExpect(jsonPath("$.message").value("Unauthorized"));
-                }
+    @Test
+    void deductWalletBalanceWrongServiceKeyReturns401() throws Exception {
+        mockMvc.perform(post("/internal/wallets/deduct")
+                .header("X-Service-Key", "wrong-key")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                                "user_id": "user-1",
+                                "order_id": "order-1",
+                                "amount": 150000,
+                                "description": "Order payment"
+                        }
+                        """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized"));
+    }
 }
