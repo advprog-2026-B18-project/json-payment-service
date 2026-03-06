@@ -1,4 +1,0 @@
-application:
-  security:
-    jwt:
-      public-key: ${JWT_PUBLIC_KEY}

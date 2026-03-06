@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.security;
 
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,39 +24,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        
-        final String authHeader = request.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+        String header = request.getHeader("Authorization");
+        String token = null;
+
+        if (header != null && header.startsWith("Bearer ")) {
+            token = header.substring(7);
         }
 
-        final String jwt = authHeader.substring(7);
+        System.out.println("test");
 
-        if (jwtUtil.isTokenValid(jwt) && SecurityContextHolder.getContext().getAuthentication() == null) {
-            
+        if (token != null && jwtUtil.validateToken(token)
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // TODO: handle case account banned 
+            // UserDetails userDetails = userDetailsService.loadUserById(accountId);
+
+            // if (userDetails instanceof CustomUserDetails custom && !custom.isEnabled()) {
+            //     throw new AccessDeniedException("Account is banned");
+            // }
+
             // Extracting using your new methods
-            String userId = jwtUtil.extractUserId(jwt);
-            String username = jwtUtil.extractUsername(jwt);
-            String role = jwtUtil.extractRole(jwt);
+            String userId = jwtUtil.getAccountIdFromToken(token);
+            String email = jwtUtil.getEmailFromToken(token);
+            String role = jwtUtil.getRoleFromToken(token);
+
+            System.out.println(userId + email + role);
 
             // Set the user_id as a request attribute so the Controller can grab it easily
             request.setAttribute("X-User-Id", userId);
-            request.setAttribute("X-Username", username);
+            request.setAttribute("X-Email", email);
             request.setAttribute("X-Role", role);
 
             // Setting up Spring Security Context
             List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    username, null, authorities
+                    email, null, authorities
             );
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
-        
+
         filterChain.doFilter(request, response);
     }
 }
