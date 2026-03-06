@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.jsonpaymentservice.service;
 
 import id.ac.ui.cs.advprog.jsonpaymentservice.model.Wallet;
+import id.ac.ui.cs.advprog.jsonpaymentservice.dto.WalletMinimalResponse;
 import id.ac.ui.cs.advprog.jsonpaymentservice.repository.WalletRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,5 +70,43 @@ class WalletServiceTest {
 
         assertEquals("Wallet not found for user: " + userId, exception.getMessage());
         verify(walletRepository, times(1)).findByUserId(userId);
+    }
+
+    @Test
+    void testProcessGetCurrentUserWalletExistingWallet() {
+        String userId = "user-123";
+        Wallet wallet = new Wallet();
+        wallet.setWalletId("wallet-123");
+        wallet.setUserId(userId);
+        wallet.setBalance(200_000L);
+        wallet.setEscrowBalance(50_000L);
+
+        when(walletRepository.findByUserId(userId)).thenReturn(Optional.of(wallet));
+
+        WalletMinimalResponse response = walletService.processGetCurrentUserWallet(userId);
+
+        assertEquals("wallet-123", response.wallet_id());
+        assertEquals(userId, response.user_id());
+        assertEquals(150_000L, response.balance());
+    }
+
+    @Test
+    void testProcessGetCurrentUserWalletCreatesWhenMissing() {
+        String userId = "new-user";
+        Wallet created = new Wallet();
+        created.setWalletId("wallet-new");
+        created.setUserId(userId);
+        created.setBalance(0L);
+        created.setEscrowBalance(0L);
+
+        when(walletRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(walletRepository.save(any(Wallet.class))).thenReturn(created);
+
+        WalletMinimalResponse response = walletService.processGetCurrentUserWallet(userId);
+
+        assertEquals("wallet-new", response.wallet_id());
+        assertEquals(userId, response.user_id());
+        assertEquals(0L, response.balance());
+        verify(walletRepository, times(1)).save(any(Wallet.class));
     }
 }
